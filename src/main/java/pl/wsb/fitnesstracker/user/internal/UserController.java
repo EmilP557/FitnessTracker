@@ -25,8 +25,11 @@ class UserController {
     }
 
     @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
     public UserDto addUser(@RequestBody UserDto userDto) throws InterruptedException {
-        return null;
+        return userMapper.toUserDto(
+                userService.createUser(userMapper.toUser(userDto))
+        );
     }
 
     @GetMapping
