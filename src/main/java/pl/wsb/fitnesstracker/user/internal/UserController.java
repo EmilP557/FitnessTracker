@@ -7,6 +7,7 @@ import pl.wsb.fitnesstracker.user.api.UserDto;
 import pl.wsb.fitnesstracker.user.api.UserProvider;
 import pl.wsb.fitnesstracker.user.api.UserService;
 
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController
@@ -24,27 +25,66 @@ class UserController {
         this.userMapper = userMapper;
     }
 
-    @PostMapping
-    @ResponseStatus(HttpStatus.CREATED)
-    public UserDto addUser(@RequestBody UserDto userDto) throws InterruptedException {
-        return userMapper.toUserDto(
-                userService.createUser(userMapper.toUser(userDto))
-        );
-    }
-
     @GetMapping
     @ResponseStatus(HttpStatus.OK)
-    public List<UserDto> getAllUsers() throws InterruptedException {
-        return this.userProvider.findAllUsers().stream()
-                .map(this.userMapper::toUserDto)
+    public List<UserDto> getAllUsers() {
+        return userProvider.findAllUsers().stream()
+                .map(userMapper::toUserDto)
                 .toList();
     }
 
     @GetMapping("/simple")
     @ResponseStatus(HttpStatus.OK)
-    public List<UserDto> getSimpleUsers() throws InterruptedException {
-        return this.userProvider.findAllUsers().stream()
-                .map(this.userMapper::toUserDto)
+    public List<UserDto> getSimpleUsers() {
+        return userProvider.findAllUsers().stream()
+                .map(userMapper::toUserDto)
                 .toList();
+    }
+
+    @GetMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public UserDto getUserById(@PathVariable Long id) {
+        return userProvider.getUser(id)
+                .map(userMapper::toUserDto)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @GetMapping("/email")
+    @ResponseStatus(HttpStatus.OK)
+    public UserDto getUserByEmail(@RequestParam String email) {
+        return userProvider.getUserByEmail(email)
+                .map(userMapper::toUserDto)
+                .orElseThrow(() -> new RuntimeException("User not found"));
+    }
+
+    @GetMapping("/older/{date}")
+    @ResponseStatus(HttpStatus.OK)
+    public List<UserDto> getUsersOlderThan(@PathVariable LocalDate date) {
+        return userProvider.findAllUsers().stream()
+                .filter(u -> u.getBirthdate().isBefore(date))
+                .map(userMapper::toUserDto)
+                .toList();
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public UserDto addUser(@RequestBody UserDto userDto) {
+        return userMapper.toUserDto(
+                userService.createUser(userMapper.toUser(userDto))
+        );
+    }
+
+    @PutMapping("/{id}")
+    @ResponseStatus(HttpStatus.OK)
+    public UserDto updateUser(@PathVariable Long id, @RequestBody UserDto userDto) {
+        return userMapper.toUserDto(
+                userService.updateUser(id, userMapper.toUser(userDto))
+        );
+    }
+
+    @DeleteMapping("/{id}")
+    @ResponseStatus(HttpStatus.NO_CONTENT)
+    public void deleteUser(@PathVariable Long id) {
+        userService.deleteUser(id);
     }
 }

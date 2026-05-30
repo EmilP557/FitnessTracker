@@ -27,6 +27,30 @@ class UserServiceImpl implements UserService, UserProvider {
     }
 
     @Override
+    public User updateUser(final Long id, final User user) {
+        log.info("Updating User with id {}", id);
+        return userRepository.findById(id)
+                .map(existing -> {
+                    userRepository.delete(existing);
+                    userRepository.flush();
+                    User updated = new User(
+                            user.getFirstName(),
+                            user.getLastName(),
+                            user.getBirthdate(),
+                            user.getEmail()
+                    );
+                    return userRepository.save(updated);
+                })
+                .orElseThrow(() -> new IllegalArgumentException("User with id " + id + " not found"));
+    }
+
+    @Override
+    public void deleteUser(final Long id) {
+        log.info("Deleting User with id {}", id);
+        userRepository.deleteById(id);
+    }
+
+    @Override
     public Optional<User> getUser(final Long userId) {
         return userRepository.findById(userId);
     }
@@ -40,5 +64,4 @@ class UserServiceImpl implements UserService, UserProvider {
     public List<User> findAllUsers() {
         return userRepository.findAll();
     }
-
 }
